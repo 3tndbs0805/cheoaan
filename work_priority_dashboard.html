@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>업무 우선순위 룰렛 기획 대시보드</title>
+<style>
+:root{
+  --bg:#eef8f5;--card:#fff;--text:#17332d;--muted:#69817b;--line:#dcece7;
+  --mint:#20b497;--mint-dark:#0f7f6c;--mint-soft:#def6ef;--mint-pale:#f4fbf8;
+  --amber:#f6b94a;--shadow:0 12px 30px rgba(18,83,71,.08);--radius:20px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--text);
+background:radial-gradient(circle at 0 0,rgba(32,180,151,.13),transparent 30%),
+radial-gradient(circle at 100% 10%,rgba(123,224,202,.12),transparent 28%),var(--bg);min-height:100vh}
+.dashboard{width:min(1500px,calc(100% - 32px));margin:18px auto;display:grid;gap:16px}
+.topbar{background:linear-gradient(135deg,#0f7f6c,#28b99c);color:#fff;border-radius:24px;padding:24px 28px;
+box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.topbar h1{margin:0;font-size:clamp(26px,3vw,42px);letter-spacing:-.04em}
+.topbar p{margin:10px 0 0;color:rgba(255,255,255,.85);line-height:1.6;font-size:14px}
+.status{padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+font-size:13px;font-weight:800;white-space:nowrap}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi,.card{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.kpi{border-radius:18px;padding:18px}.kpi .label{font-size:12px;color:var(--muted);font-weight:700}
+.kpi .value{margin-top:8px;font-size:20px;font-weight:900}.kpi .hint{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.5}
+.main-grid{display:grid;grid-template-columns:1.05fr 1.25fr 1fr;gap:16px;align-items:stretch}
+.column{display:grid;gap:16px;min-width:0}.card{border-radius:var(--radius);padding:18px;min-width:0}
+.card h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:8px}
+.section-tag{width:27px;height:27px;border-radius:9px;background:var(--mint-soft);color:var(--mint-dark);display:grid;place-items:center;font-size:12px;font-weight:900}
+.plain{margin:0;padding-left:18px;color:#35564e;line-height:1.65;font-size:13px}.plain li+li{margin-top:5px}
+.issue-list{display:grid;gap:9px}.issue{padding:11px 12px;background:#fbfefd;border:1px solid var(--line);border-radius:12px;font-size:13px;line-height:1.5}
+.goal-box{background:linear-gradient(135deg,#e6faf4,#f8fffd);border:1px solid #bfeadd;border-radius:15px;padding:15px;font-weight:850;font-size:15px;line-height:1.55;color:#175c4f}
+.task-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.task{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}
+.task b{display:block;font-size:13px;margin-bottom:6px}.task span{font-size:12px;color:var(--muted);line-height:1.5}
+.formula{margin-top:10px;padding:13px;border-radius:14px;background:#17332d;color:#fff;font-size:12px;line-height:1.7}.formula strong{color:#9ce4d3}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.step{background:var(--mint-pale);border:1px solid #cae9e1;border-radius:13px;padding:12px 9px;text-align:center;font-size:12px;font-weight:800;line-height:1.4}
+.step small{display:block;margin-top:5px;color:var(--muted);font-weight:600}
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.benefit{border-radius:14px;padding:14px;background:#f8fdfb;border:1px solid var(--line);text-align:center}
+.benefit .icon{font-size:22px}.benefit b{display:block;margin-top:7px;font-size:13px}.benefit span{display:block;margin-top:5px;font-size:11px;color:var(--muted);line-height:1.45}
+.risk-table{display:grid;gap:8px}.risk{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px}.risk>div{border:1px solid var(--line);border-radius:11px;padding:10px;font-size:12px;line-height:1.45}
+.risk .r{background:#fff8f8;color:#8a3b3b}.risk .m{background:#f5fcfa;color:#235b50}
+.decision{background:linear-gradient(135deg,#fffaf0,#fff);border:1px solid #f1d89e}.decision-box{display:grid;gap:9px}
+.decision-item{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;background:#fff;border:1px solid #f1dfb8;border-radius:12px;font-size:12px;line-height:1.5}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:5px;flex:0 0 auto}.check{color:#946c1d;font-weight:800}
+.mini-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.5}
+@media(max-width:1100px){.summary{grid-template-columns:repeat(2,1fr)}.main-grid{grid-template-columns:1fr 1fr}.column:last-child{grid-column:1/-1;grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.dashboard{width:min(100% - 20px,1500px);margin:10px auto}.topbar{flex-direction:column;padding:20px}.summary{grid-template-columns:1fr 1fr}.main-grid{grid-template-columns:1fr}.column:last-child{grid-column:auto;grid-template-columns:1fr}.task-grid,.benefits,.flow,.risk{grid-template-columns:1fr}}
+@media(max-width:480px){.summary{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="dashboard">
+<section class="topbar">
+<div><h1>업무 우선순위 룰렛 기획 대시보드</h1>
+<p>여러 업무 후보를 정량 비교하고, 시각적 순위와 재미 요소를 결합해<br>업무 시작과 우선순위 판단을 지원하는 단일 화면형 인터랙티브 도구</p></div>
+<div class="status">기획 요약 · 1 Page</div>
+</section>
+
+<section class="summary">
+<div class="kpi"><div class="label">업무 후보</div><div class="value">최대 6개</div><div class="hint">업무명을 직접 입력해 비교</div></div>
+<div class="kpi"><div class="label">평가 기준</div><div class="value">3개 항목</div><div class="hint">중요도 · 긴급도 · 영향도</div></div>
+<div class="kpi"><div class="label">점수 방식</div><div class="value">100점 환산</div><div class="hint">가중치 기반 우선순위 계산</div></div>
+<div class="kpi"><div class="label">룰렛 구성</div><div class="value">상위 5개</div><div class="hint">1~5순위 구간의 재미용 무작위 선택</div></div>
+</section>
+
+<section class="main-grid">
+<div class="column">
+<article class="card"><h2><span class="section-tag">1</span>추진 배경</h2>
+<ul class="plain"><li>여러 업무가 동시에 발생할 때 우선순위를 빠르게 비교할 수 있는 간단한 도구 필요</li><li>정성적 판단만으로는 업무 간 중요도 차이를 설명하거나 공유하기 어려움</li><li>업무용이면서도 부담 없이 사용할 수 있는 시각적·인터랙티브 방식 필요</li></ul></article>
+
+<article class="card"><h2><span class="section-tag">2</span>현황 및 문제점</h2>
+<div class="issue-list"><div class="issue">우선순위 판단 기준이 사람마다 달라질 수 있음</div><div class="issue">긴급 업무와 중요한 업무가 혼재되어 판단이 지연될 수 있음</div><div class="issue">결과를 직관적으로 설명할 수 있는 시각화가 부족함</div><div class="issue">단순 점수표는 반복 활용 동기가 낮을 수 있음</div></div></article>
+
+<article class="card"><h2><span class="section-tag">3</span>추진 목표</h2>
+<div class="goal-box">3개 평가 기준을 활용해 업무 후보를 100점 기준으로 비교하고, 결과를 순위·막대그래프·룰렛으로 시각화하는 단일 HTML 도구 구현</div></article>
+</div>
+
+<div class="column">
+<article class="card"><h2><span class="section-tag">4</span>주요 추진과제</h2>
+<div class="task-grid">
+<div class="task"><b>① 업무 후보 입력</b><span>최대 6개 업무명을 카드 형태로 입력·삭제</span></div>
+<div class="task"><b>② 슬라이더 평가</b><span>중요도·긴급도·영향도를 각각 1~5점으로 선택</span></div>
+<div class="task"><b>③ 자동 순위 산정</b><span>가중 점수 계산 후 1~6위와 100점 환산 점수 표시</span></div>
+<div class="task"><b>④ 결과 시각화</b><span>가로 막대그래프와 1위 업무 강조 처리</span></div>
+<div class="task"><b>⑤ 상위 5개 룰렛</b><span>계산 결과 상위 5개를 1~5순위 구간으로 배치해 무작위 선택</span></div>
+<div class="task"><b>⑥ 반응형 UI</b><span>PC·모바일 모두 사용할 수 있는 민트색 업무용 디자인</span></div>
+</div>
+<div class="formula"><strong>우선순위 점수</strong><br>중요도 × 40 + 긴급도 × 35 + 영향도 × 25<br>최대 500점 → <strong>100점 기준으로 환산</strong></div>
+</article>
+
+<article class="card"><h2><span class="section-tag">5</span>실행 절차</h2>
+<div class="flow"><div class="step">업무 입력<small>최대 6개</small></div><div class="step">항목 평가<small>1~5점</small></div><div class="step">점수 계산<small>가중치 적용</small></div><div class="step">순위 확인<small>그래프 포함</small></div><div class="step">룰렛 활용<small>재미 요소</small></div></div></article>
+
+<article class="card"><h2><span class="section-tag">6</span>기대효과</h2>
+<div class="benefits">
+<div class="benefit"><div class="icon">⚡</div><b>판단 속도 향상</b><span>여러 업무를 동일 기준으로 빠르게 비교</span></div>
+<div class="benefit"><div class="icon">📊</div><b>설명력 강화</b><span>순위와 점수, 막대그래프로 결과를 직관적으로 공유</span></div>
+<div class="benefit"><div class="icon">🎡</div><b>사용 경험 개선</b><span>룰렛 요소로 반복 사용의 부담을 낮춤</span></div>
+</div></article>
+</div>
+
+<div class="column">
+<article class="card"><h2><span class="section-tag">7</span>위험요인 및 대응방안</h2>
+<div class="risk-table">
+<div class="risk"><div class="r"><b>위험</b><br>점수만으로 실제 우선순위를 단정할 가능성</div><div class="m"><b>대응</b><br>법정기한·민원 영향·조직 상황·리스크를 함께 고려하도록 안내</div></div>
+<div class="risk"><div class="r"><b>위험</b><br>룰렛 결과를 공식 우선순위로 오인</div><div class="m"><b>대응</b><br>룰렛은 재미용 무작위 선택임을 명확히 표시</div></div>
+<div class="risk"><div class="r"><b>위험</b><br>평가 점수 입력의 주관성</div><div class="m"><b>대응</b><br>평가 기준 정의 또는 팀 공통 기준 마련 필요</div></div>
+</div></article>
+
+<article class="card decision"><h2><span class="section-tag">8</span>의사결정이 필요한 사항</h2>
+<div class="decision-box">
+<div class="decision-item"><span class="dot"></span><span><span class="check">평가 기준 정의 수준</span><br>중요도·긴급도·영향도 1~5점의 구체적 판단 기준 설정 여부</span></div>
+<div class="decision-item"><span class="dot"></span><span><span class="check">실제 활용 범위</span><br>개인용 도구인지 팀 단위 공통 활용 도구인지 결정 필요</span></div>
+<div class="decision-item"><span class="dot"></span><span><span class="check">추가 기능</span><br>저장·불러오기, 결과 내보내기, 공유 기능 필요 여부 추가 확인</span></div>
+<div class="decision-item"><span class="dot"></span><span><span class="check">운영 정보</span><br>예산·일정·담당자·성과지표는 <b>추가 확인 필요</b></span></div>
+</div>
+<div class="mini-note">※ 확인되지 않은 일정, 예산, 담당자, 성과수치는 임의로 산정하지 않음.</div>
+</article>
+</div>
+</section>
+</main>
+</body>
+</html>
